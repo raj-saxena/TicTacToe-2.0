@@ -24,6 +24,32 @@ object Board {
   type Row = Seq[Cell]
   type Grid = Seq[Row]
 
+  val winCount = 3
+  private val neighboursToCheck = winCount - 1
+
+  private def getHorizontalSymbols(row: Row, current: Int) = {
+    val min = if (current - neighboursToCheck < 0) 0 else current - neighboursToCheck
+    val max = if (current + neighboursToCheck >= row.size) current + neighboursToCheck else row.size
+    row.slice(min, max)
+  }
+
+  private def checkWon(symbols: Seq[Cell]) = symbols.foldLeft(List(0)) {
+    case (count :: rest, Some(_)) => count + 1 :: rest
+    case (counts, _) => 0 :: counts
+  }.max >= winCount
+
+  def getIfWinner(board: Board, p: Position): Option[Player] = {
+    // For horizontal, vertical and diagonal =>
+    // Find Seq[symbols] from min backwards to max forward.
+    // Min backwards to check = current - neighboursToCheck
+    // Max ahead to check = current + neighboursToCheck
+
+    val horizontalSymbols = getHorizontalSymbols(board.state(p.y), p.x)
+
+    // Fold left and count for symbols. If maxCount > winCount player is winner else None.
+    if (checkWon(horizontalSymbols)) board.state(p.y)(p.x) else None
+  }
+
   def createGame(size: Int, playerOne: Player, playerTwo: Player, playerThree: Player): Board = {
     val initState = for (_ <- 0 until size) yield for (_ <- 0 until size) yield None
 

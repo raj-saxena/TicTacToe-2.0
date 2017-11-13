@@ -1,6 +1,8 @@
 import model.Position
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.postfixOps
+
 class BoardSpec extends FlatSpec with Matchers {
   val playerOne = Player("X")
   val playerTwo = Player("O")
@@ -70,5 +72,27 @@ class BoardSpec extends FlatSpec with Matchers {
     assertThrows[IllegalArgumentException] {
       updatedBoard.mark(position, nextPlayer)
     }
+  }
+
+  it should "return no winner if no-one won" in {
+    val board = Board.createGame(3, playerOne, playerTwo, playerThree)
+    val position = Position(0, 0)
+    var updatedBoard = board.mark(position, playerOne)
+
+    val maybeWinner = Board.getIfWinner(updatedBoard, position)
+
+    maybeWinner should be(None)
+  }
+
+  it should "return winner if someone won horizontally" in {
+    val board = Board.createGame(3, playerOne, playerTwo, playerThree)
+    var updatedBoard = board.mark(Position(0, 0), playerOne)
+    updatedBoard = updatedBoard.mark(Position(1, 0), playerOne)
+    val position = Position(2, 0)
+    updatedBoard = updatedBoard.mark(position, playerOne)
+
+    val winner = Board.getIfWinner(updatedBoard, position)
+
+    winner.get should be(playerOne)
   }
 }
