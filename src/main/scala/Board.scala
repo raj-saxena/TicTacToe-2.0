@@ -27,27 +27,46 @@ object Board {
   val winCount = 3
   private val neighboursToCheck = winCount - 1
 
-  private def getHorizontalSymbols(row: Row, current: Int) = {
-    val min = if (current - neighboursToCheck < 0) 0 else current - neighboursToCheck
-    val max = if (current + neighboursToCheck >= row.size) current + neighboursToCheck else row.size
-    row.slice(min, max)
-  }
-
-  private def checkWon(symbols: Seq[Cell]) = symbols.foldLeft(List(0)) {
-    case (count :: rest, Some(_)) => count + 1 :: rest
+  private def checkWon(symbols: Seq[Cell], player: Player) = symbols.foldLeft(List(0)) {
+    case (count :: rest, Some(`player`)) => count + 1 :: rest
     case (counts, _) => 0 :: counts
   }.max >= winCount
 
-  def getIfWinner(board: Board, p: Position): Option[Player] = {
+  private def getHorizontalSymbolsToBeChecked(row: Row, current: Int) = {
+    row.slice(getMinNeighbour(current), getMaxNeighbour(row.size, current))
+  }
+
+  private def getVerticalSymbolsToBeChecked(grid: Grid, current: Position) = {
+    for (row <- grid.slice(getMinNeighbour(current.y), getMaxNeighbour(grid.size, current.y))) yield row(current.x)
+  }
+
+  private def getMaxNeighbour(maxSize: Int, current: Int) = {
+    if (current + neighboursToCheck >= maxSize) maxSize else current + neighboursToCheck
+  }
+
+  private def getMinNeighbour(current: Int) = {
+    if (current - neighboursToCheck < 0) 0 else current - neighboursToCheck
+  }
+
+  private def getTopLeftToBottomRightSymbols(grid: Grid, p: Position) = {
+    val positions = (getMinNeighbour(p.x) until getMaxNeighbour(grid.size, p.x)) zip (getMinNeighbour(p.y) until getMaxNeighbour(grid.size, p.y))
+
+    for ((x, y) <- positions) yield grid(x)(y)
+  }
+
+  def getIfWinner(board: Board, p: Position, player: Player): Option[Player] = {
     // For horizontal, vertical and diagonal =>
     // Find Seq[symbols] from min backwards to max forward.
     // Min backwards to check = current - neighboursToCheck
     // Max ahead to check = current + neighboursToCheck
 
-    val horizontalSymbols = getHorizontalSymbols(board.state(p.y), p.x)
+    val horizontalSymbols = getHorizontalSymbolsToBeChecked(board.state(p.y), p.x)
+    val verticalSymbols = getVerticalSymbolsToBeChecked(board.state, p)
+    val topLeftToBottomRightSymbols = getTopLeftToBottomRightSymbols(board.state, p)
 
     // Fold left and count for symbols. If maxCount > winCount player is winner else None.
-    if (checkWon(horizontalSymbols)) board.state(p.y)(p.x) else None
+    if (checkWon(horizontalSymbols, player) || checkWon(verticalSymbols, player)
+      || checkWon(topLeftToBottomRightSymbols, player)) Some(player) else None
   }
 
   def createGame(size: Int, playerOne: Player, playerTwo: Player, playerThree: Player): Board = {

@@ -79,7 +79,7 @@ class BoardSpec extends FlatSpec with Matchers {
     val position = Position(0, 0)
     var updatedBoard = board.mark(position, playerOne)
 
-    val maybeWinner = Board.getIfWinner(updatedBoard, position)
+    val maybeWinner = Board.getIfWinner(updatedBoard, position, playerOne)
 
     maybeWinner should be(None)
   }
@@ -91,8 +91,35 @@ class BoardSpec extends FlatSpec with Matchers {
     val position = Position(2, 0)
     updatedBoard = updatedBoard.mark(position, playerOne)
 
-    val winner = Board.getIfWinner(updatedBoard, position)
+    val winner = Board.getIfWinner(updatedBoard, position, playerOne)
 
+    winner should be(`defined`)
+    winner.get should be(playerOne)
+  }
+
+  it should "return winner if someone won vertically" in {
+    val board = Board.createGame(3, playerOne, playerTwo, playerThree)
+    var updatedBoard = board.mark(Position(0, 0), playerOne)
+    updatedBoard = updatedBoard.mark(Position(0, 1), playerOne)
+    val position = Position(0, 2)
+    updatedBoard = updatedBoard.mark(position, playerOne)
+
+    val winner = Board.getIfWinner(updatedBoard, position, playerOne)
+
+    winner should be(`defined`)
+    winner.get should be(playerOne)
+  }
+
+  it should "return winner if someone won diagonally top-left to bottom-right" in {
+    val board = Board.createGame(3, playerOne, playerTwo, playerThree)
+    var updatedBoard = board.mark(Position(0, 0), playerOne)
+    updatedBoard = updatedBoard.mark(Position(1, 1), playerOne)
+    val position = Position(2, 2)
+    updatedBoard = updatedBoard.mark(position, playerOne)
+
+    val winner = Board.getIfWinner(updatedBoard, position, playerOne)
+
+    winner should be(`defined`)
     winner.get should be(playerOne)
   }
 }
