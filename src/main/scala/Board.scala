@@ -1,27 +1,45 @@
-class Board(size: Int) {
-  type Symbol = String
-  type Cell = Option[Symbol]
+import Board.Grid
+import model.Position
+
+class Board(val state: Grid, size: Int, playerOne: Player, playerTwo: Player, playerThree: Player) {
+  private val maxIndex = size - 1
+
+  def mark(p: Position, player: Player): Board = {
+    if (p.x < 0 || p.x > maxIndex || p.y < 0 || p.y > maxIndex) throw new IllegalArgumentException(s"invalid position $p")
+
+    val elem = state(p.y)(p.x)
+    elem match {
+      case None => new Board(state.updated(p.y, state(p.y).updated(p.x, Some(player))), size, nextPlayer, nextPlayer, nextPlayer)
+      case _ => throw new IllegalArgumentException("Position already occupied")
+    }
+  }
+
+  private val playerSequence = Iterator.continually(List(playerOne, playerTwo, playerThree)).flatten
+
+  def nextPlayer: Player = playerSequence.next()
+}
+
+object Board {
+  type Cell = Option[Player]
   type Row = Seq[Cell]
-  type GameBoard = Seq[Row]
+  type Grid = Seq[Row]
 
-  val state: GameBoard = for (_ <- 0 until size) yield for (_ <- 0 until size) yield None
+  def createGame(size: Int, playerOne: Player, playerTwo: Player, playerThree: Player): Board = {
+    val initState = for (_ <- 0 until size) yield for (_ <- 0 until size) yield None
 
-  private def getHorizontalSymbols(row: Row) = for (cell <- row) yield cell
+    new Board(initState, size, playerOne, playerTwo, playerThree)
+  }
 
-  def getStateStr: String = {
-    val symbolRows = for {
-      row <- state
-    } yield getHorizontalSymbols(row) map {
-      case Some(p) => p
+  private def getCellsBy(row: Row) = for (cell <- row) yield cell
+
+  def getStateStr(board: Board): String = {
+    val cellValuesByRow = for {
+      row <- board.state
+    } yield getCellsBy(row) map {
+      case Some(p) => p.symbol
       case _ => "_"
     } mkString " | "
 
-    symbolRows mkString "\n"
-  }
-}
-
-object Test {
-  def main(args: Array[String]): Unit = {
-    println(new Board(3).getStateStr)
+    cellValuesByRow mkString "\n"
   }
 }
