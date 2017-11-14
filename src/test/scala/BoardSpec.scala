@@ -122,4 +122,17 @@ class BoardSpec extends FlatSpec with Matchers {
     winner should be(`defined`)
     winner.get should be(playerOne)
   }
+
+  it should "return winner if someone won diagonally bottom-left to top-right" in {
+    val board = Board.createGame(3, playerOne, playerTwo, playerThree)
+    var updatedBoard = board.mark(Position(0, 2), playerOne)
+    updatedBoard = updatedBoard.mark(Position(1, 1), playerOne)
+    val position = Position(2, 0)
+    updatedBoard = updatedBoard.mark(position, playerOne)
+
+    val winner = Board.getIfWinner(updatedBoard, position, playerOne)
+
+    winner should be(`defined`)
+    winner.get should be(playerOne)
+  }
 }

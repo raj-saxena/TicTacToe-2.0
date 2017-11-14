@@ -25,7 +25,7 @@ object Board {
   type Grid = Seq[Row]
 
   val winCount = 3
-  private val neighboursToCheck = winCount - 1
+  private val neighboursToCheck = winCount
 
   private def checkWon(symbols: Seq[Cell], player: Player) = symbols.foldLeft(List(0)) {
     case (count :: rest, Some(`player`)) => count + 1 :: rest
@@ -51,7 +51,23 @@ object Board {
   private def getTopLeftToBottomRightSymbols(grid: Grid, p: Position) = {
     val positions = (getMinNeighbour(p.x) until getMaxNeighbour(grid.size, p.x)) zip (getMinNeighbour(p.y) until getMaxNeighbour(grid.size, p.y))
 
+    getSymbolsAt(positions, grid)
+  }
+
+  private def getSymbolsAt(positions: Seq[(Int, Int)], grid: Grid) = {
     for ((x, y) <- positions) yield grid(x)(y)
+  }
+
+  private def getBottomLeftToTopRightSymbols(grid: Grid, p: Position) = {
+    val minX = getMinNeighbour(p.x)
+    val maxX = getMaxNeighbour(grid.size, p.x)
+    val minY = getMinNeighbour(p.y)
+    val maxY = getMaxNeighbour(grid.size, p.y)
+
+    //slope is reversed so y decreases as x increases
+    val positions = (minX until maxX) zip (minY until maxY).reverse
+
+    getSymbolsAt(positions, grid)
   }
 
   def getIfWinner(board: Board, p: Position, player: Player): Option[Player] = {
@@ -63,10 +79,17 @@ object Board {
     val horizontalSymbols = getHorizontalSymbolsToBeChecked(board.state(p.y), p.x)
     val verticalSymbols = getVerticalSymbolsToBeChecked(board.state, p)
     val topLeftToBottomRightSymbols = getTopLeftToBottomRightSymbols(board.state, p)
+    val bottomLeftToTopRightSymbols = getBottomLeftToTopRightSymbols(board.state, p)
 
     // Fold left and count for symbols. If maxCount > winCount player is winner else None.
-    if (checkWon(horizontalSymbols, player) || checkWon(verticalSymbols, player)
-      || checkWon(topLeftToBottomRightSymbols, player)) Some(player) else None
+    if (checkWon(horizontalSymbols, player) ||
+      checkWon(verticalSymbols, player) ||
+      checkWon(topLeftToBottomRightSymbols, player) ||
+      checkWon(bottomLeftToTopRightSymbols, player)
+    )
+      Some(player)
+    else
+      None
   }
 
   def createGame(size: Int, playerOne: Player, playerTwo: Player, playerThree: Player): Board = {
